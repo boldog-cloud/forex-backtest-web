@@ -1,0 +1,95 @@
+document.addEventListener("DOMContentLoaded", function(){
+  const form = document.getElementById("tradeForm");
+  const tableBody = document.querySelector("#tradesTable tbody");
+  const summaryBox = document.getElementById("summaryBox");
+  const loadSampleBtn = document.getElementById("loadSample");
+
+  const ctx = document.getElementById('equityChart').getContext('2d');
+  let equityChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'Saldo',
+        data: [],
+        fill: false,
+        tension: 0.1
+      }]
+    },
+    options: {
+      scales: {
+        x: { type: 'time', time: { tooltipFormat: 'YYYY-MM-DD HH:mm' } },
+        y: { beginAtZero: false }
+      },
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
+
+  var calendarEl = document.getElementById('calendar');
+  var calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    height: 400,
+    events: []
+  });
+  calendar.render();
+
+  async function loadTrades(){
+    const res = await axios.get('/api/trades');
+    const trades = res.data;
+    tableBody.innerHTML = "";
+    trades.forEach((t, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${idx+1}</td>
+        <td>${(new Date(t.timestamp)).toLocaleString()}</td>
+        <td>${t.position}</td>
+        <td>${t.profit}</td>
+        <td>${t.win}</td>
+        <td>${t.entry_reason}</td>
+        <td>${t.balance_after}</td>`;
+      tableBody.appendChild(tr);
+    });
+
+    equityChart.data.labels = trades.map(t => t.timestamp);
+    equityChart.data.datasets[0].data = trades.map(t => t.balance_after);
+    equityChart.update();
+
+    calendar.removeAllEvents();
+    trades.forEach(t => {
+      calendar.addEvent({
+        title: `${t.position} ${t.profit > 0 ? '+' : ''}${t.profit}`,
+        start: t.timestamp,
+        description: t.entry_reason,
+        color: t.profit>0 ? 'green' : 'red'
+      });
+    });
+
+    const sum = await axios.get('/api/summary');
+    const s = sum.data;
+    summaryBox.innerHTML = `<div>Transakcji: ${s.total} — Wygrane: ${s.wins} — Przegrane: ${s.losses} — Winrate: ${s.winrate}% — Końcowy kapitał: ${s.final_balance} — Expectancy: ${s.expectancy}</div>`;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+      timestamp: document.getElementById('timestamp').value ? new Date(document.getElementById('timestamp').value).toISOString() : undefined,
+      position: document.getElementById('position').value,
+      entry_reason: document.getElementById('entry_reason').value,
+      profit: parseFloat(document.getElementById('profit').value)
+    };
+    try {
+      await axios.post('/api/trades', payload);
+      await loadTrades();
+      form.reset();
+    } catch (err) {
+      alert("Błąd dodawania transakcji: " + (err.response && err.response.data ? JSON.stringify(err.response.data) : err));
+    }
+  });
+
+  loadSampleBtn.addEventListener('click', async () => {
+    await axios.post('/api/load_sample');
+    await loadTrades();
+  });
+
+  loadTrades();
+});
