@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Forex Backtest</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
+  <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body class="p-3">
+  <div class="container">
+    <h1 class="mb-3">Forex Backtest — Web</h1>
+
+    <div class="row">
+      <div class="col-md-6">
+        <h5>Dodaj transakcję</h5>
+        <form id="tradeForm">
+          <div class="mb-2">
+            <label>Data i czas</label>
+            <input type="datetime-local" id="timestamp" class="form-control">
+          </div>
+          <div class="mb-2">
+            <label>Pozycja</label>
+            <select id="position" class="form-control">
+              <option>LONG</option>
+              <option>SHORT</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label>Przyczyna wejścia</label>
+            <input type="text" id="entry_reason" class="form-control">
+          </div>
+          <div class="mb-2">
+            <label>Profit (np. 120 lub -40)</label>
+            <input type="number" id="profit" step="0.01" class="form-control">
+          </div>
+          <button class="btn btn-primary" type="submit">Dodaj</button>
+          <button class="btn btn-secondary" id="loadSample" type="button">Wczytaj przykładowe</button>
+          <a class="btn btn-outline-success" href="/api/export_csv">Eksport CSV</a>
+        </form>
+
+        <hr>
+
+        <h5>Podsumowanie</h5>
+        <div id="summaryBox" class="mb-3"></div>
+
+        <h5>Lista transakcji</h5>
+        <table class="table table-sm" id="tradesTable">
+          <thead>
+            <tr><th>#</th><th>Data</th><th>Pos</th><th>Profit</th><th>Win</th><th>Powód</th><th>Saldo po</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="col-md-6">
+        <h5>Krzywa kapitału</h5>
+        <canvas id="equityChart" height="200"></canvas>
+        <hr>
+        <h5>Kalendarz transakcji</h5>
+        <div id="calendar"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
